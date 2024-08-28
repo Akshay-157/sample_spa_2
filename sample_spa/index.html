@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guest Self-Service SPA</title>
+  <!-- Include the MSAL.js library from CDN -->
+  <script src="https://alcdn.msauth.net/browser/2.22.0/js/msal-browser.min.js"></script>
+  <script>
+    // Configure MSAL for the SPA
+    const msalConfig = {
+      auth: {
+        clientId: "2a280c81-adb0-48a5-9564-6606295ca404", // Replace with your app's client ID
+        authority: "https://login.microsoftonline.com/d449fbac-b4fa-484f-96b7-81430ced2373", // Replace with your Azure AD tenant ID
+        redirectUri: "https://lively-glacier-0d965db03.5.azurestaticapps.net" // Replace with your app's redirect URI
+      },
+      cache: {
+        cacheLocation: "localStorage", // Cache location
+        storeAuthStateInCookie: true // Set to true to help with issues on IE11 or Edge
+      }
+    };
+
+    // Create MSAL instance
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+    // Sign-in function
+    function signIn() {
+      const loginRequest = {
+        scopes: ["User.Read"]
+      };
+
+      msalInstance.loginPopup(loginRequest).then(loginResponse => {
+        console.log('id_token acquired at: ' + new Date().toString());
+        console.log(loginResponse);
+        showWelcomeMessage();
+      }).catch(error => {
+        console.error(error);
+      });
+    }
+
+    // Sign-out function
+    function signOut() {
+      const logoutRequest = {
+        account: msalInstance.getAllAccounts()[0]
+      };
+
+      msalInstance.logout(logoutRequest);
+    }
+
+    // Show welcome message
+    function showWelcomeMessage() {
+      const account = msalInstance.getAllAccounts()[0];
+      if (account) {
+        document.getElementById('welcomeMessage').innerText = `Welcome, ${account.username}`;
+        document.getElementById('signInButton').style.display = 'none';
+        document.getElementById('signOutButton').style.display = 'block';
+      }
+    }
+
+    // Check if user is already signed in
+    function checkSignIn() {
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length > 0) {
+        showWelcomeMessage();
+      }
+    }
+
+    // Initialize app
+    window.onload = function() {
+      checkSignIn();
+    };
+  </script>
+</head>
+<body>
+  <h1>Entra Guest Self-Service Portal</h1>
+  <div id="welcomeMessage"></div>
+  <button id="signInButton" onclick="signIn()">Sign In</button>
+  <button id="signOutButton" onclick="signOut()" style="display:none;">Sign Out</button>
+</body>
+</html>
